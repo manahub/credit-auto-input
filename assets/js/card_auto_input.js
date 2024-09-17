@@ -37,6 +37,31 @@ $(function() {
         }
     });
 
+    // グレースケールとコントラスト強調処理
+    const preprocessImage = (canvas) => {
+        const ctx = canvas.getContext('2d');
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imageData.data;
+
+        // グレースケール変換
+        for (let i = 0; i < data.length; i += 4) {
+            const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+            data[i] = avg; // R
+            data[i + 1] = avg; // G
+            data[i + 2] = avg; // B
+        }
+
+        // コントラスト強調
+        const contrastFactor = 1.5; // 倍率
+        for (let i = 0; i < data.length; i += 4) {
+            data[i] = Math.min(255, data[i] * contrastFactor);
+            data[i + 1] = Math.min(255, data[i + 1] * contrastFactor);
+            data[i + 2] = Math.min(255, data[i + 2] * contrastFactor);
+        }
+
+        ctx.putImageData(imageData, 0, 0);
+    };
+
     // 画像読込の処理
     $('.cameraBtn').on('click', function() {
         const videoElement = $('.cameraMain video')[0];
@@ -69,6 +94,9 @@ $(function() {
         croppedCanvas.height = cardArea.height;
         const croppedCtx = croppedCanvas.getContext('2d');
         croppedCtx.drawImage(canvas, cardArea.x, cardArea.y, cardArea.width, cardArea.height, 0, 0, cardArea.width, cardArea.height);
+
+        // グレースケールとコントラスト強調処理
+        preprocessImage(croppedCanvas);
 
         // OCR処理
         Tesseract.recognize(
